@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VideoReloc: Long-Term Indoor Video Relocalization against a Kilobyte-Scale Semantic Scene Graph</title>
+  <meta name="description" content="VideoReloc relocalizes a later RGB-D video in a compact semantic scene graph of class-labelled boxes (about 100 kB per room) after lighting and furniture changes, by turning adaptive video clips into spatially extended queries and verifying pose hypotheses against clip-wide object geometry.">
+  <link rel="canonical" href="https://videoreloc.github.io/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="VideoReloc: Long-Term Indoor Video Relocalization against a Kilobyte-Scale Semantic Scene Graph">
+  <meta property="og:description" content="Relocalize a later RGB-D video in a 100 kB map of class-labelled boxes after lighting and furniture changes. 90.6 % recall at 1 m/10° on RIO10 with a 95 kB map.">
+  <meta property="og:image" content="https://videoreloc.github.io/static/images/teaser_left.jpg">
+  <meta property="og:url" content="https://videoreloc.github.io/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text: #1f2430;
+      --muted: #5f6572;
+      --accent: #2f6fdb;
+      --bg-soft: #f5f7fa;
+      --border: #e3e7ee;
+      --ours: #2f6fdb;
+      --ours-bg: #eef4fd;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: 'Noto Sans', 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+      background: #ffffff;
+      line-height: 1.6;
+      font-size: 17px;
+    }
+    h1, h2, h3, h4 { font-family: 'Google Sans', 'Noto Sans', sans-serif; line-height: 1.25; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+    .container.wide { max-width: 1280px; }
+
+    /* ---------- header ---------- */
+    header { padding: 56px 0 8px; text-align: center; }
+    header h1 { font-size: clamp(26px, 4vw, 40px); margin: 0 0 6px; font-weight: 700; }
+    header h1 .model { color: var(--accent); }
+    .venue {
+      display: inline-block;
+      font-size: clamp(20px, 2.6vw, 28px);
+      font-weight: 700;
+      color: #c2410c;
+      letter-spacing: 0.3px;
+      margin: 10px 0 16px;
+    }
+    .authors { font-size: 19px; margin: 8px 0 2px; }
+    .authors a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--muted); }
+    .affil { color: var(--muted); font-size: 15.5px; margin-bottom: 20px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 10px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: #22252c; color: #fff; border-radius: 999px;
+      padding: 8px 18px; font-size: 15px; text-decoration: none;
+      font-family: 'Google Sans', sans-serif; transition: background .15s ease;
+    }
+    .btn:hover { background: #3a3f4a; }
+    .btn.disabled { background: #9aa1ad; cursor: default; }
+    .btn.disabled:hover { background: #9aa1ad; }
+    .btn .icon { font-size: 16px; line-height: 1; }
+
+    /* ---------- sections ---------- */
+    section { padding: 34px 0 10px; }
+    section h2 {
+      font-size: clamp(22px, 3vw, 30px); text-align: center; margin: 6px 0 22px;
+    }
+    section h3 { font-size: 21px; margin: 26px 0 10px; }
+    .fig { margin: 0; text-align: center; }
+    .fig img { max-width: 100%; height: auto; border-radius: 10px; }
+    .fig figcaption {
+      font-size: 15px; color: var(--muted); text-align: left;
+      max-width: 900px; margin: 12px auto 0;
+    }
+    .fig figcaption b { color: var(--text); }
+    .abstract-text { text-align: justify; hyphens: auto; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 34px auto 0; max-width: 1000px; }
+
+    /* ---------- teaser: two panels, bottoms aligned as in the paper ---------- */
+    .teaser-row { display: flex; gap: 18px; align-items: flex-end; justify-content: center; }
+    .teaser-row .left { flex: 0 0 48.5%; }
+    .teaser-row .right { flex: 1 1 auto; }
+    .teaser-row img { width: 100%; height: auto; display: block; }
+    @media (max-width: 720px) {
+      .teaser-row { flex-direction: column; align-items: stretch; }
+      .teaser-row .left { flex-basis: auto; }
+    }
+
+    /* ---------- text blocks ---------- */
+    .lead { max-width: 900px; margin: 0 auto 10px; }
+    ul.contrib { max-width: 900px; margin: 6px auto 0; padding-left: 22px; }
+    ul.contrib li { margin: 0 0 10px; }
+    ul.contrib li b { color: var(--text); }
+    .setup { font-size: 15.5px; color: var(--muted); max-width: 900px; margin: 0 auto 18px; }
+    .setup b { color: var(--text); }
+
+    /* ---------- tables ---------- */
+    .tablewrap { overflow-x: auto; margin: 8px 0 6px; }
+    table.results {
+      border-collapse: collapse; margin: 0 auto; font-size: 15px; min-width: 640px;
+    }
+    table.results caption {
+      caption-side: top; font-size: 15px; color: var(--muted); padding-bottom: 10px; text-align: center;
+    }
+    table.results th, table.results td { padding: 6px 11px; text-align: center; white-space: nowrap; }
+    table.results thead th { font-family: 'Google Sans', sans-serif; font-weight: 500; }
+    table.results thead tr:last-child th { border-bottom: 2px solid var(--text); }
+    table.results thead th.group { border-bottom: 1px solid var(--muted); font-weight: 700; padding-bottom: 3px; }
+    table.results thead th.blank { border-bottom: none; }
+    table.results tbody tr.sep td { border-top: 1px solid var(--border); }
+    table.results tbody tr:first-child td { border-top: none; }
+    table.results tbody tr:last-child td { border-bottom: 2px solid var(--text); }
+    table.results td:first-child, table.results th:first-child { text-align: left; }
+    table.results tbody tr.ours { background: var(--ours-bg); }
+    table.results tbody tr.ours td:first-child { color: var(--ours); font-weight: 600; }
+    table.results td.num { font-variant-numeric: tabular-nums; }
+    .best { font-weight: 700; }
+    .second { text-decoration: underline; text-underline-offset: 3px; }
+    .arrow { font-size: 12px; color: var(--muted); }
+    .notes { font-size: 14px; color: var(--muted); max-width: 900px; margin: 10px auto 0; text-align: left; }
+    .notes b { color: var(--text); }
+    .table-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 28px; align-items: start; margin-top: 34px; }
+    @media (max-width: 1000px) { .table-pair { grid-template-columns: 1fr; } }
+    .check { color: var(--text); }
+
+    /* ---------- bibtex ---------- */
+    pre.bibtex {
+      background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px;
+      padding: 18px 20px; font-size: 14px; overflow-x: auto; line-height: 1.5;
+    }
+
+    footer {
+      margin-top: 50px; padding: 26px 0 34px; border-top: 1px solid var(--border);
+      font-size: 14px; color: var(--muted); text-align: center;
+    }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== Header ===================== -->
+  <header>
+    <div class="container">
+      <h1><span class="model">VideoReloc</span>: Long-Term Indoor Video Relocalization against a Kilobyte-Scale Semantic Scene&nbsp;Graph</h1>
+      <!-- Venue line intentionally absent while the paper is under review. -->
+      <p class="authors">
+        Qianru Li<sup>1,2</sup>, Xuyang Chen<sup>1,2</sup>, Xuqin Wang<sup>1,2</sup>, Zhenghao Zhang<sup>1</sup>,
+        Hongyi Luo<sup>1,2</sup>, Tao Wu<sup>2</sup>, Daniel Cremers<sup>1</sup>, Lu Liu<sup>2</sup>,
+        <a href="mailto:zhang_yanfeng_3d@foxmail.com">Yanfeng Zhang</a><sup>2&dagger;</sup>
+      </p>
+      <p class="affil">
+        <sup>1</sup>Technical University of Munich &nbsp;&nbsp; <sup>2</sup>Huawei Hilbert Research Center (Dresden)<br>
+        <sup>&dagger;</sup>Corresponding author
+      </p>
+      <div class="btn-row">
+        <a class="btn" href="static/paper/videoreloc.pdf" target="_blank" rel="noopener"><span class="icon">&#128196;</span> Paper (PDF)</a>
+        <!-- TODO(arxiv): replace with <a class="btn" href="https://arxiv.org/abs/XXXX.XXXXX" target="_blank" rel="noopener"><span class="icon">&#128220;</span> arXiv</a> -->
+        <span class="btn disabled"><span class="icon">&#128220;</span> arXiv (coming soon)</span>
+        <!-- TODO(code): replace with <a class="btn" href="https://github.com/..." target="_blank" rel="noopener"><span class="icon">&#128187;</span> Code</a> -->
+        <span class="btn disabled"><span class="icon">&#128187;</span> Code (coming soon)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== Teaser ===================== -->
+  <section>
+    <div class="container">
+      <figure class="fig">
+        <div class="teaser-row">
+          <div class="left">
+            <img src="static/images/teaser_left.jpg" alt="Left: mapping visit stored as class-labelled boxes (sofa, table, chairs, cabinet, window) with no appearance. Middle: frames from a re-visit weeks later with changed lighting and a moved chair. Right: the re-visit trajectory relocalized in the box map, with gravity and Manhattan wall directions as orientation cues.">
+          </div>
+          <div class="right">
+            <img src="static/images/teaser_plot.png" alt="Map size versus recall at 1 m/10 degrees over all RIO10 re-scan frames: VideoReloc reaches the highest recall with the smallest map.">
+          </div>
+        </div>
+        <figcaption>
+          <b>Video relocalization with a compact semantic map.</b> <i>Left:</i> the map stores class-labelled boxes for
+          objects, walls and floors in about 100&nbsp;kB. A clip from a later RGB-D video is localized in the map's
+          coordinate system after changes in lighting and furniture layout. <i>Right:</i> map size versus recall at
+          1&nbsp;m/10&deg; over all RIO10 re-scan frames. <b>VideoReloc</b> achieves the highest recall with the smallest map
+          among these methods.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== Abstract ===================== -->
+  <section id="abstract">
+    <div class="container">
+      <h2>Abstract</h2>
+      <p class="abstract-text">
+        Given a compact semantic scene graph, long-term indoor video relocalization estimates a map-frame trajectory after
+        lighting and furniture changes. Visual methods rely on appearance and become unreliable under these changes;
+        localizing one frame at a time from object classes and geometry instead leaves sparse, ambiguous evidence. We
+        introduce <b>VideoReloc</b>, whose adaptive clips use odometry to gather spatial evidence until object and motion
+        criteria are met, adapting query length to the observed scene. Its run-level decision rechecks conflicting
+        placements using evidence accumulated across connected clips, stabilizing the trajectory beyond adjacent-clip
+        tracking. <i>Hypothesis-first registration</i> proposes poses from object triplets and verifies each using
+        clip-wide object centers and box surfaces. <i>Orientation-aware refinement</i> uses box faces, gravity and wall
+        directions to resolve ambiguity in camera orientation and refine the full pose. This reframes sparse-map
+        relocalization as verification of spatially extended video queries, moving discriminative support from stored
+        appearance to temporal context and permitting a 100&nbsp;kB map of class-labelled boxes. On RIO10 and ReplicaCAD,
+        the all-frame localization success rate at 1&nbsp;m/10&deg; is <b>73.5&nbsp;%</b> and <b>61.1&nbsp;%</b> under
+        causal evaluation, rising to <b>90.6&nbsp;%</b> and <b>74.8&nbsp;%</b> with clip closure. The evaluated per-frame
+        scene coordinate regressors reach up to <b>47.6&nbsp;%</b> and <b>49.8&nbsp;%</b>, respectively, with maps of
+        12.6&ndash;42&nbsp;MB.
+      </p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===================== Method ===================== -->
+  <section id="method">
+    <div class="container">
+      <h2>Method</h2>
+      <figure class="fig">
+        <img src="static/images/pipeline.png" alt="VideoReloc pipeline: per-clip graph construction from RGB-D odometry, SAM 3 masks and Map-Det3D boxes; clip candidate generation by previous-clip prediction, triangle retrieval, center consensus, frame-pose anchors and orientation fallback; box-surface consistency verification; and a back-end with orientation-aware refinement, run-level decision and a clip-rigid pose graph, all against a global scene graph of text labels, 3D boxes, gravity and wall axes.">
+        <figcaption>
+          <b>Overview of VideoReloc.</b> Per-clip graph construction produces the local scene graph
+          <i>L<sub>c</sub></i> from RGB-D odometry and depth-backed instance fusion. Clip candidates generation combines
+          previous-clip prediction, triangle retrieval, frame-pose anchors and orientation fallback; box-surface
+          consistency verifies them. The back-end applies orientation-aware refinement, the run-level decision and the
+          clip-rigid pose graph; final frame poses satisfy <i>T<sub>i</sub></i> = <i>S<sub>c</sub></i><i>V<sub>i</sub></i>.
+        </figcaption>
+      </figure>
+
+      <h3>Contributions</h3>
+      <p class="lead">
+        VideoReloc replaces mapping-visit appearance with a persistent map of class-labelled 3D boxes, about 100&nbsp;kB
+        per room, and draws discriminative support from the incoming video. Adaptive clips use odometry to turn partial
+        frame observations into a spatially extended query, closing after sufficient object evidence and camera travel.
+      </p>
+      <ul class="contrib">
+        <li>A <b>video-clip relocalization paradigm</b> that constructs spatially extended queries from adaptive clips and
+          uses a run-level decision to reconcile conflicting placements.</li>
+        <li><b>Hypothesis-first registration</b> that checks candidate poses against the clip's object layout to reject
+          geometrically inconsistent matches.</li>
+        <li><b>Orientation-aware refinement</b> that uses oriented box-face geometry to update rotation and translation
+          jointly, with gravity constraining camera tilt and wall directions constraining camera yaw.</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===================== Qualitative results ===================== -->
+  <section id="qualitative">
+    <div class="container">
+      <h2>Qualitative Results</h2>
+      <figure class="fig">
+        <img src="static/images/qual3d.png" alt="RIO10 qualitative results on scenes 07, 09 and 10: estimated trajectories of VideoReloc, ACE-G and R-SCoRe drawn over the map boxes, coloured by position error, with rolling median translation and rotation error curves below.">
+        <figcaption>
+          <b>RIO10 qualitative results.</b> Grey boxes are map objects; trajectory colour continuously encodes position
+          error (green: 0&nbsp;m; yellow: 0.5&nbsp;m; red: &ge;&nbsp;1&nbsp;m). VideoReloc uses estimates with clip
+          closure. Lower plots show log-scale rolling median translation/rotation errors; dashed lines mark 1&nbsp;m/10&deg;.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===================== Quantitative results ===================== -->
+  <section id="results">
+    <div class="container wide">
+      <h2>Quantitative Results</h2>
+      <p class="setup">
+        <b>RIO10</b> contains ten rooms scanned weeks apart with furniture and lighting changes; maps use the first visit,
+        and evaluation includes all 34,415 re-scan frames. <b>ReplicaCAD</b> is a controlled evaluation built from six
+        authored layouts of one apartment, rendered along the same 4,000-frame path under daylight, warm evening lights
+        and two warm night lamps; the map is built from a separate 6,000-frame daylight tour. Recall counts a frame as
+        successful only when neither position nor rotation error exceeds the stated thresholds; frames without an
+        estimate count as failures.
+      </p>
+
+      <div class="tablewrap">
+        <table class="results">
+          <caption><b>Comparison of recall and pose errors</b> across relocalization methods and evaluation variants on
+            RIO10 and ReplicaCAD. Best in <span class="best">bold</span>, second best <span class="second">underlined</span>.</caption>
+          <thead>
+            <tr>
+              <th class="blank"></th>
+              <th class="blank"></th>
+              <th class="group" colspan="3">RIO10, 10 re-scans, 34,415 frames</th>
+              <th class="group" colspan="3">ReplicaCAD, 18 tours, 72,000 frames</th>
+            </tr>
+            <tr>
+              <th>Method</th>
+              <th>Map size <span class="arrow">&darr;</span></th>
+              <th>Pos./rot. <span class="arrow">&darr;</span></th>
+              <th>R@1&nbsp;m/10&deg; <span class="arrow">&uarr;</span></th>
+              <th>0.25&nbsp;m/5&deg; <span class="arrow">&uarr;</span></th>
+              <th>Pos./rot. <span class="arrow">&darr;</span></th>
+              <th>R@1&nbsp;m/10&deg; <span class="arrow">&uarr;</span></th>
+              <th>0.25&nbsp;m/5&deg; <span class="arrow">&uarr;</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>HLoc</td><td class="num">1&ndash;2&nbsp;GB</td><td class="num">12&nbsp;cm / 3.9&deg;</td><td class="num">49.8</td><td class="num">41.3</td><td class="num"><span class="second">4&nbsp;cm</span> / <span class="second">0.6&deg;</span></td><td class="num">48.4</td><td class="num">44.5</td></tr>
+            <tr><td>ACE-G</td><td class="num">12.6&nbsp;MB</td><td class="num">36&nbsp;cm / 11.7&deg;</td><td class="num">45.5</td><td class="num">25.7</td><td class="num">52&nbsp;cm / 8.2&deg;</td><td class="num">49.8</td><td class="num">37.1</td></tr>
+            <tr><td>R-SCoRe</td><td class="num">42&nbsp;MB</td><td class="num">40&nbsp;cm / 12.1&deg;</td><td class="num">47.6</td><td class="num">38.5</td><td class="num">72&nbsp;cm / 9.4&deg;</td><td class="num">48.6</td><td class="num">42.5</td></tr>
+            <tr><td>MSG-Loc</td><td class="num"><span class="second">1.5&nbsp;MB</span></td><td class="num">161&nbsp;cm / 49.3&deg;</td><td class="num">1.2</td><td class="num">0.1</td><td class="num">265&nbsp;cm / 27.7&deg;</td><td class="num">11.3</td><td class="num">1.3</td></tr>
+            <tr class="sep"><td>FPFH&ndash;ICP<sup>&dagger;</sup></td><td class="num">6&ndash;13&nbsp;MB</td><td class="num">11&nbsp;cm / 3.4&deg;</td><td class="num">22.4</td><td class="num">21.7</td><td class="num"><span class="best">1&nbsp;cm</span> / <span class="best">0.2&deg;</span></td><td class="num">10.0</td><td class="num">9.9</td></tr>
+            <tr><td>ACE-G<sup>&dagger;</sup></td><td class="num">12.6&nbsp;MB</td><td class="num"><span class="second">10&nbsp;cm</span> / 3.6&deg;</td><td class="num">79.8</td><td class="num second">66.2</td><td class="num">14&nbsp;cm / 1.8&deg;</td><td class="num second">67.0</td><td class="num second">59.4</td></tr>
+            <tr><td>R-SCoRe<sup>&dagger;</sup></td><td class="num">42&nbsp;MB</td><td class="num"><span class="best">9&nbsp;cm</span> / <span class="best">3.0&deg;</span></td><td class="num second">85.8</td><td class="num best">71.0</td><td class="num">11&nbsp;cm / 1.7&deg;</td><td class="num">66.7</td><td class="num best">59.8</td></tr>
+            <tr class="ours sep"><td>VideoReloc (ours), causal</td><td class="num best">95&nbsp;kB</td><td class="num">20&nbsp;cm / 4.3&deg;</td><td class="num">73.5</td><td class="num">44.0</td><td class="num">27&nbsp;cm / 3.0&deg;</td><td class="num">61.1</td><td class="num">40.4</td></tr>
+            <tr class="ours"><td>VideoReloc (ours), with clip closure</td><td class="num best">95&nbsp;kB</td><td class="num">18&nbsp;cm / <span class="second">3.3&deg;</span></td><td class="num best">90.6</td><td class="num">64.1</td><td class="num">22&nbsp;cm / 2.1&deg;</td><td class="num best">74.8</td><td class="num">53.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="notes">
+        <b>Protocol.</b> Recall (%) includes all frames, with missing poses counted as failures. Causal evaluation uses
+        frames up to the query frame; evaluation with clip closure also uses the remaining frames of that clip. Median
+        position and rotation errors are ranked separately, and ties share rank. <sup>&dagger;</sup> marks clip-rigid
+        controls: the same clip partition and within-clip odometry as VideoReloc, but each clip is localized independently
+        without cross-clip tracking, run-level decisions, or pose-graph optimization.
+        <b>Map size and errors.</b> Map size is the map each method builds on RIO10; ReplicaCAD maps occupy 134&nbsp;kB
+        for VideoReloc, 1.96&nbsp;MB for MSG-Loc and 18.1&nbsp;MB for FPFH&ndash;ICP. Median errors use only returned
+        poses. Pose coverage (RIO10 / ReplicaCAD) is 100/100&nbsp;% for the regressors, 75/68&nbsp;% for HLoc,
+        29/12&nbsp;% for FPFH&ndash;ICP, 21/61&nbsp;% for MSG-Loc, 94/97&nbsp;% for VideoReloc under causal evaluation
+        and 100/99&nbsp;% with clip closure. FPFH&ndash;ICP errors summarize scene medians on RIO10 and a separate replay
+        on ReplicaCAD.
+      </p>
+
+      <div class="tablewrap" style="margin-top:34px;">
+        <table class="results">
+          <caption><b>Recall at 1&nbsp;m/10&deg; under illumination and furniture changes</b> in ReplicaCAD.
+            Best in <span class="best">bold</span>, second best <span class="second">underlined</span>.</caption>
+          <thead>
+            <tr>
+              <th class="blank"></th>
+              <th class="group" colspan="4">Illumination</th>
+              <th class="group" colspan="4">Rearrangement</th>
+            </tr>
+            <tr>
+              <th>Method</th>
+              <th>day</th><th>evening</th><th>night</th><th>&Delta;<sub>L</sub></th>
+              <th>unchanged</th><th>rearranged</th><th>&Delta;<sub>R</sub></th><th>kept</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>HLoc</td><td class="num">55.5</td><td class="num">51.9</td><td class="num">37.7</td><td class="num">&minus;17.7</td><td class="num">75.9</td><td class="num">42.9</td><td class="num">&minus;33.0</td><td class="num">56&nbsp;%</td></tr>
+            <tr><td>ACE-G</td><td class="num">53.1</td><td class="num">49.6</td><td class="num">46.8</td><td class="num">&minus;6.3</td><td class="num">78.4</td><td class="num">44.1</td><td class="num">&minus;34.3</td><td class="num">56&nbsp;%</td></tr>
+            <tr><td>R-SCoRe</td><td class="num">54.2</td><td class="num">50.3</td><td class="num">41.5</td><td class="num">&minus;12.6</td><td class="num">74.7</td><td class="num">43.4</td><td class="num">&minus;31.3</td><td class="num">58&nbsp;%</td></tr>
+            <tr><td>MSG-Loc</td><td class="num">12.2</td><td class="num">12.0</td><td class="num">9.6</td><td class="num">&minus;2.6</td><td class="num">33.0</td><td class="num">6.9</td><td class="num">&minus;26.1</td><td class="num">21&nbsp;%</td></tr>
+            <tr class="sep"><td>FPFH&ndash;ICP<sup>&dagger;</sup></td><td class="num">10.1</td><td class="num">9.1</td><td class="num">8.9</td><td class="num">&minus;1.2</td><td class="num">40.1</td><td class="num">3.2</td><td class="num">&minus;36.8</td><td class="num">8&nbsp;%</td></tr>
+            <tr><td>ACE-G<sup>&dagger;</sup></td><td class="num second">68.9</td><td class="num">65.7</td><td class="num second">66.5</td><td class="num">&minus;2.4</td><td class="num best">89.4</td><td class="num second">62.6</td><td class="num">&minus;26.8</td><td class="num">70&nbsp;%</td></tr>
+            <tr><td>R-SCoRe<sup>&dagger;</sup></td><td class="num">68.8</td><td class="num second">66.8</td><td class="num">64.6</td><td class="num">&minus;4.3</td><td class="num">87.8</td><td class="num">62.5</td><td class="num">&minus;25.3</td><td class="num second">71&nbsp;%</td></tr>
+            <tr class="ours sep"><td>VideoReloc (ours), causal</td><td class="num">60.0</td><td class="num">64.2</td><td class="num">59.0</td><td class="num second">&minus;1.0</td><td class="num">80.1</td><td class="num">57.2</td><td class="num second">&minus;22.9</td><td class="num second">71&nbsp;%</td></tr>
+            <tr class="ours"><td>VideoReloc (ours), with clip closure</td><td class="num best">73.8</td><td class="num best">76.8</td><td class="num best">73.9</td><td class="num best">+0.1</td><td class="num second">88.5</td><td class="num best">72.1</td><td class="num best">&minus;16.4</td><td class="num best">81&nbsp;%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="notes">
+        Recall (%) uses all frames; illumination averages six layouts per column, and unchanged/rearranged average
+        three/fifteen tours. &Delta;<sub>L</sub> and &Delta;<sub>R</sub> are night&ndash;day and rearranged&ndash;unchanged
+        changes (points); kept is rearranged/unchanged (%). Rankings use unrounded recall; ties share rank.
+        <sup>&dagger;</sup> is defined as in the table above. FPFH&ndash;ICP factors use per-tour medians across replay
+        seeds.
+      </p>
+
+      <div class="table-pair">
+        <div>
+          <div class="tablewrap">
+            <table class="results" style="min-width:0;">
+              <caption><b>Effect of the localization unit</b> on RIO10.</caption>
+              <thead>
+                <tr><th>Unit</th><th>1&nbsp;m/10&deg;</th><th>0.25&nbsp;m/5&deg;</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>one frame</td><td class="num">2.6</td><td class="num">0.4</td></tr>
+                <tr><td>30-frame clip</td><td class="num">19.1</td><td class="num">9.3</td></tr>
+                <tr><td>100-frame clip</td><td class="num">39.3</td><td class="num">23.7</td></tr>
+                <tr><td>250-frame clip</td><td class="num">52.8</td><td class="num">35.4</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="notes">
+            Each unit is registered independently, without tracking or a pose graph. Recall (%) uses all 34,415 frames
+            and is measured when the unit closes.
+          </p>
+        </div>
+        <div>
+          <div class="tablewrap">
+            <table class="results" style="min-width:0;">
+              <caption><b>Effects of refinement, run-level decisions and adaptive clips.</b></caption>
+              <thead>
+                <tr>
+                  <th class="group" colspan="3">Mechanism</th>
+                  <th class="group" colspan="4">RIO10</th>
+                  <th class="group" colspan="4">ReplicaCAD tours</th>
+                </tr>
+                <tr>
+                  <th class="blank" rowspan="2">orientation-aware</th>
+                  <th class="blank" rowspan="2">run-level</th>
+                  <th class="blank" rowspan="2">adaptive</th>
+                  <th class="group" colspan="2">with clip closure</th>
+                  <th class="group" colspan="2">causal</th>
+                  <th class="group" colspan="2">with clip closure</th>
+                  <th class="group" colspan="2">causal</th>
+                </tr>
+                <tr>
+                  <th>coarse</th><th>fine</th><th>coarse</th><th>fine</th><th>coarse</th><th>fine</th><th>coarse</th><th>fine</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td></td><td></td><td></td><td class="num">76.4</td><td class="num">39.3</td><td class="num">70.8</td><td class="num">33.4</td><td class="num">64.9</td><td class="num">38.6</td><td class="num">56.3</td><td class="num">33.6</td></tr>
+                <tr><td class="check">&#10003;</td><td></td><td></td><td class="num">78.5</td><td class="num">44.4</td><td class="num">72.5</td><td class="num">38.0</td><td class="num">70.4</td><td class="num">45.1</td><td class="num second">62.0</td><td class="num second">41.3</td></tr>
+                <tr><td class="check">&#10003;</td><td class="check">&#10003;</td><td></td><td class="num">81.3</td><td class="num">43.9</td><td class="num">70.8</td><td class="num">36.2</td><td class="num best">78.9</td><td class="num second">51.6</td><td class="num best">69.4</td><td class="num best">47.1</td></tr>
+                <tr><td class="check">&#10003;</td><td></td><td class="check">&#10003;</td><td class="num best">91.0</td><td class="num second">61.3</td><td class="num second">73.0</td><td class="num second">41.8</td><td class="num">56.3</td><td class="num">39.3</td><td class="num">45.4</td><td class="num">29.2</td></tr>
+                <tr class="ours"><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="num second">90.6</td><td class="num best">64.1</td><td class="num best">73.5</td><td class="num best">44.0</td><td class="num second">74.8</td><td class="num best">53.0</td><td class="num">61.1</td><td class="num">40.4</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="notes">
+            Recall (%) includes all frames. Coarse: 1&nbsp;m/10&deg;. Fine: 0.25&nbsp;m/5&deg;. Checkmarks indicate
+            enabled components; empty cells indicate point-to-point refinement, no run-level decision and fixed 100-frame
+            clips, respectively. Tracking and the pose graph remain enabled. The last row is the full VideoReloc.
+            Bold/underline: first/second in each column.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===================== BibTeX ===================== -->
+  <section id="bibtex">
+    <div class="container">
+      <h2>BibTeX</h2>
+      <!-- TODO(arxiv): add  eprint = {XXXX.XXXXX}, archivePrefix = {arXiv}, primaryClass = {cs.RO}  once the listing is announced. -->
+      <pre class="bibtex">@article{li2026videoreloc,
+  title   = {VideoReloc: Long-Term Indoor Video Relocalization against a Kilobyte-Scale Semantic Scene Graph},
+  author  = {Li, Qianru and Chen, Xuyang and Wang, Xuqin and Zhang, Zhenghao and Luo, Hongyi and Wu, Tao and Cremers, Daniel and Liu, Lu and Zhang, Yanfeng},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</pre>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>Scenes from <a href="https://waldjohannau.github.io/RIO10/" target="_blank" rel="noopener">RIO10</a> and
+        <a href="https://aihabitat.org/datasets/replica_cad/" target="_blank" rel="noopener">ReplicaCAD</a>.</p>
+    </div>
+  </footer>
+</body>
+</html>
