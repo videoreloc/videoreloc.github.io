@@ -125,7 +125,8 @@
     .notes { font-size: 14px; color: var(--muted); max-width: 900px; margin: 10px auto 0; text-align: left; }
     .notes b { color: var(--text); }
     .table-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 28px; align-items: start; margin-top: 34px; }
-    @media (max-width: 1000px) { .table-pair { grid-template-columns: 1fr; } }
+    .table-pair > div { min-width: 0; }   /* let each cell shrink so its .tablewrap scrolls instead of overflowing the page */
+    @media (max-width: 1000px) { .table-pair { grid-template-columns: minmax(0, 1fr); } }
     .check { color: var(--text); }
 
     /* ---------- bibtex ---------- */
