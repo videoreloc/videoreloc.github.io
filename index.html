@@ -78,6 +78,7 @@
       max-width: 900px; margin: 12px auto 0;
     }
     .fig figcaption b { color: var(--text); }
+    .fig video.overview { display: block; width: 100%; max-width: 960px; height: auto; margin: 0 auto; border-radius: 10px; background: #000; border: 1px solid var(--border); }
     .abstract-text { text-align: justify; hyphens: auto; }
     .divider { border: none; border-top: 1px solid var(--border); margin: 34px auto 0; max-width: 1000px; }
 
@@ -160,6 +161,7 @@
       </p>
       <div class="btn-row">
         <a class="btn" href="static/paper/videoreloc.pdf" target="_blank" rel="noopener"><span class="icon">&#128196;</span> Paper (PDF)</a>
+        <a class="btn" href="#video"><span class="icon">&#127916;</span> Video</a>
         <!-- TODO(arxiv): replace with <a class="btn" href="https://arxiv.org/abs/XXXX.XXXXX" target="_blank" rel="noopener"><span class="icon">&#128220;</span> arXiv</a> -->
         <span class="btn disabled"><span class="icon">&#128220;</span> arXiv (coming soon)</span>
         <!-- TODO(code): replace with <a class="btn" href="https://github.com/..." target="_blank" rel="noopener"><span class="icon">&#128187;</span> Code</a> -->
@@ -212,6 +214,28 @@
         scene coordinate regressors reach up to <b>47.6&nbsp;%</b> and <b>49.8&nbsp;%</b>, respectively, with maps of
         12.6&ndash;42&nbsp;MB.
       </p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ===================== Video ===================== -->
+  <section id="video">
+    <div class="container">
+      <h2>Video</h2>
+      <figure class="fig">
+        <video class="overview" controls preload="metadata" playsinline poster="static/images/video_poster.jpg">
+          <source src="static/videos/videoreloc_overview.mp4" type="video/mp4">
+          Your browser does not support embedded video: <a href="static/videos/videoreloc_overview.mp4">download the MP4</a>.
+        </video>
+        <figcaption>
+          <b>Overview video</b> (2&nbsp;min&nbsp;49&nbsp;s, silent, English captions burned in). One map and a later
+          visit on RIO10; causal localization frame by frame; clip growth and instance fusion; hypothesis-first
+          registration from object triangles to box-surface verification; orientation-aware refinement with gravity
+          and wall directions; the run-level decision correcting an earlier clip; the same frames under VideoReloc,
+          ACE-G and R-SCoRe; and illumination and furniture changes in ReplicaCAD.
+        </figcaption>
+      </figure>
     </div>
   </section>
 
