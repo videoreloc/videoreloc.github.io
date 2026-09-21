@@ -15,5 +15,6 @@ This is a static site served with GitHub Pages; `index.html` is the entire page.
 
 ## Pending
 
-- arXiv button and BibTeX `eprint`: placeholders until the arXiv listing is announced (search `TODO(arxiv)` in `index.html`).
+- Paper button: greyed out, reserved for the official publication link (search `TODO(paper)` in `index.html`). The arXiv button links to https://arxiv.org/abs/2609.21804.
 - Code button: greyed out ("coming soon") until the repository is released (search `TODO(code)`).
+- `static/paper/videoreloc.pdf` is no longer linked from the page but stays hosted so that earlier direct links keep working.
