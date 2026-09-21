@@ -131,6 +131,8 @@
     .table-pair > div { min-width: 0; }   /* let each cell shrink so its .tablewrap scrolls instead of overflowing the page */
     @media (max-width: 1000px) { .table-pair { grid-template-columns: minmax(0, 1fr); } }
     .check { color: var(--text); }
+    /* ablation table: the first column holds checkmarks, so centre it like the other mechanism columns */
+    table.results.mech td:first-child, table.results.mech th:first-child { text-align: center; }
 
     /* ---------- bibtex ---------- */
     pre.bibtex {
@@ -420,7 +422,7 @@
         </div>
         <div>
           <div class="tablewrap">
-            <table class="results" style="min-width:0;">
+            <table class="results mech" style="min-width:0;">
               <caption><b>Effects of refinement, run-level decisions and adaptive clips.</b></caption>
               <thead>
                 <tr>
